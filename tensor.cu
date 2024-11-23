@@ -162,10 +162,11 @@ Tensor Tensor::operator*(const Tensor& other) {
     return result;
 }
 
-Tensor Tensor::operator*(int scalar) {
+Tensor Tensor::operator*(float scalar) {
     Tensor result = Tensor(dims, ndims);
     int block_size = 256;
     int num_blocks = (size + block_size - 1) / block_size;
+    cudaMemcpy(data_gpu, data_cpu, size * sizeof(float), cudaMemcpyHostToDevice);
     multiply_scalar_kernel<<<num_blocks, block_size>>>(result.data_gpu, data_gpu, scalar, size);
     cudaDeviceSynchronize();
     CHECK_ERROR();
@@ -253,36 +254,16 @@ Tensor Tensor::reshape(int* new_dims, int new_ndims) {
 // Transpose the tensor
 // WARNING: This method is not working properly
 Tensor Tensor::transpose(int dim1, int dim2) {
-    int* perm = new int[ndims];
-    for (int i = 0; i < ndims; i++) {
-        perm[i] = i;
-    }
-    std::swap(perm[dim1], perm[dim2]);
-    
-    int* new_dims = new int[ndims];
-    for (int i = 0; i < ndims; i++) {
-        new_dims[i] = dims[i];
-    }
+    assert (ndims == 4);
+    int new_dims[] = {dims[0], dims[1], dims[2], dims[3]};
     std::swap(new_dims[dim1], new_dims[dim2]);
-    
-    int* strides = new int[ndims];
-    strides[ndims - 1] = 1;  
-    for (int i = ndims - 2; i >= 0; i--) {
-        strides[i] = strides[i + 1] * dims[i + 1];
-    }
-
-    int total_size = size; 
     Tensor result = Tensor(new_dims, ndims);
     int block_size = 256;
-    int num_blocks = (total_size + block_size - 1) / block_size;
-    transpose_kernel<<<num_blocks, block_size>>>(result.data_gpu, data_gpu, dims, perm, strides, total_size, ndims);
+    int grid_size = (size + block_size - 1) / block_size;
+    transpose_kernel<<<grid_size, block_size>>>(result.data_gpu, data_gpu, dims[0], dims[1], dims[2], dims[3], dim1, dim2, size);
     cudaDeviceSynchronize();
     CHECK_ERROR();
-    cudaMemcpy(result.data_cpu, result.data_gpu, total_size * sizeof(float), cudaMemcpyDeviceToHost);
-    
-    delete[] perm; 
-    delete[] new_dims;
-    delete[] strides;
+    cudaMemcpy(result.data_cpu, result.data_gpu, size * sizeof(float), cudaMemcpyDeviceToHost);
     return result;
 }
 
@@ -292,6 +273,7 @@ Tensor Tensor::softmax() {
     Tensor result = Tensor(dims, ndims);
     dim3 block_size(dims[0], dims[1], dims[2]);
     dim3 threads(dims[3], 1, 1);
+    cudaMemcpy(data_gpu, data_cpu, size * sizeof(float), cudaMemcpyHostToDevice);
     softmax_kernel<<<block_size, threads>>>(result.data_gpu, data_gpu, dims[0], dims[1], dims[2], dims[3]);
     cudaDeviceSynchronize();
     CHECK_ERROR();

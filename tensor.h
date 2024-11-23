@@ -29,7 +29,7 @@ public:
 
     Tensor operator+(const Tensor& other);
     Tensor operator*(const Tensor& other);
-    Tensor operator*(int scalar);
+    Tensor operator*(float scalar);
 
     static Tensor matmul(const Tensor& a, const Tensor& b);
 

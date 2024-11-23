@@ -82,7 +82,7 @@ __global__ void multiply_kernel(float* result, float* a, float* b, int size) {
 
 
 // CUDA kernel to multiply an array by a scalar
-__global__ void multiply_scalar_kernel(float* result, float* a, int scalar, int size) {
+__global__ void multiply_scalar_kernel(float* result, float* a, float scalar, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         result[idx] = a[idx] * scalar;
@@ -137,30 +137,33 @@ __global__ void matmul_4d_kernel(float* result, float* a, float* b, int B, int C
 }
 
 
-// CUDA kernel to perform 3D tensor multiplication
+// CUDA kernel to perform 4D tensor transposition
 // WARNING: This kernel is not working properly
-__global__ void transpose_kernel(float* result, float* data, int* dims, int* perm, int* strides, int total_size, int ndims) {
+__global__ void transpose_kernel(float* result, float* data, int dim0, int dim1, int dim2, int dim3, int swap0, int swap1, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < total_size) {
-        int indices[4];  
-        int rem = idx;  
-        for (int i = 0; i < ndims; i++) {
-            indices[i] = rem / strides[i];
-            rem = rem % strides[i];
-        }
-        int new_idx = 0;
-        for (int i = 0; i < ndims; i++) {
-            new_idx = new_idx * dims[perm[i]] + indices[perm[i]];
-        }
-        printf("here\n");
-        printf("idx: %d, indices: [%d, %d, %d, %d], new_idx: %d\n", 
-        idx, indices[0], indices[1], indices[2], indices[3], new_idx);
-        result[new_idx] = data[idx];
+    if (idx < size) {
+        int idx3 = idx % dim3;
+        int idx2 = (idx / dim3) % dim2;
+        int idx1 = (idx / (dim3 * dim2)) % dim1;
+        int idx0 = idx / (dim3 * dim2 * dim1);
+        int indices[4] = {idx0, idx1, idx2, idx3};
+        int dims[4] = {dim0, dim1, dim2, dim3};
+        
+        int temp = indices[swap0];
+        indices[swap0] = indices[swap1];
+        indices[swap1] = temp;
+
+        temp = dims[swap0];
+        dims[swap0] = dims[swap1];
+        dims[swap1] = temp;
+
+        int output_idx = indices[0] * dims[1] * dims[2] * dims[3] + indices[1] * dims[2] * dims[3] + indices[2] * dims[3] + indices[3];
+        result[output_idx] = data[idx];
     }
 }
 
 // CUDA kernel to perform softmax along the last dimension of a 4D tensor
-__global__ void softmax_kernel(float* input, float* output, int B, int C, int H, int W) {
+__global__ void softmax_kernel(float* output, float* input, int B, int C, int H, int W) {
     int b = blockIdx.x;   
     int c = blockIdx.y; 
     int h = blockIdx.z;
