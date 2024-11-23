@@ -31,9 +31,3 @@ Tensor Attention::forward(const Tensor& input, bool mask) {
     Tensor result = Tensor::matmul(weight, v).transpose(1, 2).reshape(input.dims, 3);
     return out_proj.forward(result);
 }
-
-int main() {
-    Tensor input = Tensor(new int[3]{32, 128, 512}, 3);
-    input.init_rand();
-    return 0;
-}
