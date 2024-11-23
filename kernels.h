@@ -23,4 +23,4 @@ __global__ void transpose_kernel(float* result, float* data, int* dims, int* per
 __global__ void softmax_kernel(float* input, float* output, int B, int C, int H, int W);
 __global__ void mask_kernel(float* mask, int batch_size, int seq_len, int heads, int d_head, int mask_value);
 
-#endif // DIS_CU_H
+#endif 

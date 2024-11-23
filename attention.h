@@ -13,11 +13,9 @@ public:
     Linear k_proj;
     Linear v_proj;
     Linear out_proj;
-    // Constructor
     Attention(int heads, int d_embed, bool proj_bias = true, bool out_bias = true);
 
-    // Forward pass function
     Tensor forward(const Tensor& input, bool mask = false);
 };
 
-#endif // ATTENTION_H
+#endif 

@@ -3,6 +3,7 @@
 #include <cmath>           
 #include <cstdio>         
 #include <float.h>      
+#include "kernels.h"
 
 // Check for CUDA errors
 void check_cuda_error(const char* file, int line) {
@@ -13,8 +14,6 @@ void check_cuda_error(const char* file, int line) {
         exit(1);
     }
 }
-
-#define CHECK_ERROR() check_cuda_error(__FILE__, __LINE__)
 
 // CUDA kernel to initialize an array with zeros
 __global__ void init_zero_kernel(float* data, int size) {

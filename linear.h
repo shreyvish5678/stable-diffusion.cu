@@ -5,17 +5,13 @@
 
 class Linear {
 public:
-    Tensor weights;  // Weight matrix
-    Tensor bias;     // Bias vector (optional)
-    bool if_bias;    // Flag to determine if bias is used
+    Tensor weights; 
+    Tensor bias;     
+    bool if_bias;   
 
-    // Default constructor
     Linear();
-
-    // Parameterized constructor
     Linear(int in_features, int out_features, bool if_bias = true);
 
-    // Forward pass method
     Tensor forward(const Tensor& input);
 };
 
