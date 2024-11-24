@@ -7,7 +7,7 @@ int main() {
     Tensor input = Tensor(new int[3]{16, 77, 768}, 3);
     input.init_rand();
     printf("%f\n", input.at(8, 8, 8));
-    Attention attention = Attention(12, 768, true, true);
+    SelfAttention attention = SelfAttention(12, 768, true, true);
     Tensor output = attention.forward(input, true);
     printf("%f\n", attention.q_proj.weights.at(8, 8));
     printf("%f\n", attention.q_proj.bias.at(8));
