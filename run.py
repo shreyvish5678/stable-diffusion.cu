@@ -59,5 +59,5 @@ attention.out_proj.weight.data = torch.from_numpy(np.fromfile('out_proj_weights.
 print(attention.out_proj.weight.data[8, 8].item())
 attention.out_proj.bias.data = torch.from_numpy(np.fromfile('out_proj_bias.bin', dtype=np.float32))
 print(attention.out_proj.bias.data[8].item())
-output = attention(input)
+output = attention(input, True)
 print(output[8, 8, 8].item())

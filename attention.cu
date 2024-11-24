@@ -23,8 +23,11 @@ Tensor Attention::forward(const Tensor& input, bool mask) {
     Tensor weight = Tensor::matmul(q, k.transpose(2, 3));
     if (mask) { 
         dim3 block_size(16, 16);
-        dim3 grid_size(batch_size, seq_len, (heads + block_size.y - 1) / block_size.y);
-        mask_kernel<<<grid_size, block_size>>>(weight.data_gpu, batch_size, seq_len, heads, d_head, 1);
+        dim3 grid_size((seq_len + block_size.x - 1) / block_size.x, (seq_len + block_size.y - 1) / block_size.y, batch_size * heads);
+        mask_kernel<<<grid_size, block_size>>>(weight.data_gpu, batch_size, seq_len, heads);
+        cudaDeviceSynchronize();
+        CHECK_ERROR();
+        cudaMemcpy(weight.data_cpu, weight.data_gpu, weight.size * sizeof(float), cudaMemcpyDeviceToHost);
     }
     weight = weight * (1.0 / sqrt(d_head));
     weight = weight.softmax();

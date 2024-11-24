@@ -187,15 +187,21 @@ __global__ void softmax_kernel(float* output, float* input, int B, int C, int H,
 }
 
 // CUDA kernel to apply a mask to the attention weights
-__global__ void mask_kernel(float* mask, int batch_size, int seq_len, int heads, int d_head, int mask_value) {
-    int b = blockIdx.x; 
-    int d = blockIdx.y;
-    int row = threadIdx.y + blockIdx.z * blockDim.y; 
-    int col = threadIdx.x;  
-
-    if (b < batch_size && d < seq_len && row < heads && col < d_head) {
-        if (col < row + mask_value) { 
-            mask[b * seq_len * heads * d_head + d * heads * d_head + row * d_head + col] = -FLT_MAX;
-        }
+__global__ void mask_kernel(float* mask, int batch_size, int seq_len, int heads) {
+    int row = blockIdx.x * blockDim.x + threadIdx.x;
+    int col = blockIdx.y * blockDim.y + threadIdx.y;
+    int batch_head = blockIdx.z;
+    
+    if (row >= seq_len || col >= seq_len) {
+        return;
+    }
+    
+    int batch_idx = batch_head / heads;
+    int head_idx = batch_head % heads;
+    
+    int index = batch_idx * (heads * seq_len * seq_len) + head_idx * (seq_len * seq_len) + row * seq_len + col;
+    
+    if (col > row) {
+        mask[index] = -INFINITY;
     }
 }

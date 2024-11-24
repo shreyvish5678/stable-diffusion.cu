@@ -21,6 +21,6 @@ __global__ void matmul_3d_kernel(float* result, float* a, float* b, int a_batch,
 __global__ void matmul_4d_kernel(float* result, float* a, float* b, int B, int C, int M, int K, int N);
 __global__ void transpose_kernel(float* result, float* data, int dim0, int dim1, int dim2, int dim3, int swap0, int swap1, int size);
 __global__ void softmax_kernel(float* input, float* output, int B, int C, int H, int W);
-__global__ void mask_kernel(float* mask, int batch_size, int seq_len, int heads, int d_head, int mask_value);
+__global__ void mask_kernel(float* mask, int batch_size, int seq_len, int heads);
 
 #endif 
