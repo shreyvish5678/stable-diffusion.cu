@@ -75,6 +75,13 @@ void Tensor::init_rand() {
     cudaMemcpy(data_cpu, data_gpu, size * sizeof(float), cudaMemcpyDeviceToHost);
 }
 
+float Tensor::at(int i) {
+    if (ndims != 1) {
+        throw std::runtime_error("Wrong number of indices");
+    }
+    return data_cpu[i];
+}
+
 // Following methods are used to access elements of the tensor
 float Tensor::at(int i, int j) {
     if (ndims != 2) {
@@ -212,7 +219,7 @@ Tensor Tensor::matmul(const Tensor& a, const Tensor& b) {
         assert(a.dims[0] == b.dims[0]);
         assert (a.dims[1] == b.dims[1]);
         assert (a.dims[3] == b.dims[2]);
-        int result_dims[] = {a.dims[0], a.dims[1], a.dims[2], b.dims[2]};
+        int result_dims[] = {a.dims[0], a.dims[1], a.dims[2], b.dims[3]};
         Tensor result = Tensor(result_dims, 4);
         dim3 block_size(16, 16);
         dim3 num_blocks((result_dims[3] + block_size.x - 1) / block_size.x, 
@@ -252,7 +259,6 @@ Tensor Tensor::reshape(int* new_dims, int new_ndims) {
 }
 
 // Transpose the tensor
-// WARNING: This method is not working properly
 Tensor Tensor::transpose(int dim1, int dim2) {
     assert (ndims == 4);
     int new_dims[] = {dims[0], dims[1], dims[2], dims[3]};

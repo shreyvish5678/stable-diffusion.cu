@@ -4,27 +4,28 @@
 #include "linear.h"
 
 int main() {
-    Tensor a = Tensor(new int[3]{4, 64, 768}, 3);
-    a.init_rand();
-    Attention attn1 = Attention(12, 768, false, false);
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start, 0);
-
-    Tensor b = attn1.forward(a, false);
-
-    cudaEventRecord(stop, 0);
-    cudaEventSynchronize(stop);
-    float elapsedTime;
-    cudaEventElapsedTime(&elapsedTime, start, stop);
-    printf("Time: %f\n", elapsedTime);
-    printf("%f\n", b.at(0, 0, 0));
-    a.save("input.bin");
-    b.save("output.bin");
-    attn1.q_proj.weights.save("q_proj_weights.bin");
-    attn1.k_proj.weights.save("k_proj_weights.bin");
-    attn1.v_proj.weights.save("v_proj_weights.bin");
-    attn1.out_proj.weights.save("out_proj_weights.bin");
-    return 0;
+    Tensor input = Tensor(new int[3]{16, 77, 768}, 3);
+    input.init_rand();
+    printf("%f\n", input.at(8, 8, 8));
+    Attention attention = Attention(12, 768, true, true);
+    Tensor output = attention.forward(input);
+    printf("%f\n", attention.q_proj.weights.at(8, 8));
+    printf("%f\n", attention.q_proj.bias.at(8));
+    printf("%f\n", attention.k_proj.weights.at(8, 8));
+    printf("%f\n", attention.k_proj.bias.at(8));
+    printf("%f\n", attention.v_proj.weights.at(8, 8));
+    printf("%f\n", attention.v_proj.bias.at(8));
+    printf("%f\n", attention.out_proj.weights.at(8, 8));
+    printf("%f\n", attention.out_proj.bias.at(8));
+    printf("%f\n", output.at(8, 8, 8));
+    input.save("input.bin");
+    attention.q_proj.weights.save("q_proj_weights.bin");
+    attention.k_proj.weights.save("k_proj_weights.bin");
+    attention.v_proj.weights.save("v_proj_weights.bin");
+    attention.out_proj.weights.save("out_proj_weights.bin");
+    attention.q_proj.bias.save("q_proj_bias.bin");
+    attention.k_proj.bias.save("k_proj_bias.bin");
+    attention.v_proj.bias.save("v_proj_bias.bin");
+    attention.out_proj.bias.save("out_proj_bias.bin");
+    output.save("output.bin");
 }

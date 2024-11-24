@@ -37,7 +37,7 @@ __global__ void init_rand_kernel(float* data, int size, unsigned long long seed)
     if (idx < size) {
         curandState state; // State for the random number generator
         curand_init(seed, idx, 0, &state); // Initialize the random number generator
-        data[idx] = (curand(&state) % 100) / 100.0f;
+        data[idx] = curand_normal(&state);
     }
 }
 
@@ -138,7 +138,6 @@ __global__ void matmul_4d_kernel(float* result, float* a, float* b, int B, int C
 
 
 // CUDA kernel to perform 4D tensor transposition
-// WARNING: This kernel is not working properly
 __global__ void transpose_kernel(float* result, float* data, int dim0, int dim1, int dim2, int dim3, int swap0, int swap1, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {

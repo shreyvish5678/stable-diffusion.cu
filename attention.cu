@@ -17,8 +17,7 @@ Tensor Attention::forward(const Tensor& input, bool mask) {
     int batch_size = input.dims[0];
     int seq_len = input.dims[1];
     int interim_dims[] = {batch_size, seq_len, heads, d_head};
-    Tensor q = q_proj.forward(input);
-    q = q.reshape(interim_dims, 4).transpose(1, 2);
+    Tensor q = q_proj.forward(input).reshape(interim_dims, 4).transpose(1, 2);
     Tensor k = k_proj.forward(input).reshape(interim_dims, 4).transpose(1, 2);
     Tensor v = v_proj.forward(input).reshape(interim_dims, 4).transpose(1, 2);
     Tensor weight = Tensor::matmul(q, k.transpose(2, 3));

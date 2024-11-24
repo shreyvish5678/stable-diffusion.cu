@@ -1,22 +1,2 @@
-# Ignore Visual Studio Code
 .vscode
-
-# Ignore compiled object files from CUDA and C++
-*.o
-*.obj
-
-# Ignore executables
-*.out
-*.exe
-
-# Ignore CUDA-specific files
-*.cu.o
-*.cu.obj
-*.ptx
-*.cubin
-
-# Ignore any other intermediate files (depending on your build system)
-*.d
-*.so
-*.dll
 *.bin

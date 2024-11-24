@@ -21,6 +21,7 @@ public:
     void init_one();
     void init_rand();
 
+    float at(int i);
     float at(int i, int j);
     float at(int i, int j, int k);
     float at(int* indices);
