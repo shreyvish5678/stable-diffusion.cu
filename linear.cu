@@ -25,3 +25,10 @@ Tensor Linear::forward(const Tensor& input) {
         return Tensor::matmul(input, weights);
     }
 }
+
+void Linear::free_memory() {
+    weights.free_memory();
+    if (if_bias) {
+        bias.free_memory();
+    }
+}

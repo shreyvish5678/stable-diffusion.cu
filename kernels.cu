@@ -205,3 +205,17 @@ __global__ void mask_kernel(float* mask, int batch_size, int seq_len, int heads)
         mask[index] = -INFINITY;
     }
 }
+
+// CUDA kernel for embedding lookup 
+__global__ void embedding_lookup_kernel(float* result, float* weight, const int* tokens, int batch_size, int seq_len, int d_embed, int vocab_size, int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) {
+        int batch = idx / (seq_len * d_embed);
+        int token = (idx / d_embed) % seq_len;
+        int dim = idx % d_embed;
+        int token_idx = tokens[batch * seq_len + token];
+        if (token_idx >= 0 && token_idx < vocab_size) {
+            result[idx] = weight[token_idx * d_embed + dim];
+        }   
+    }
+}

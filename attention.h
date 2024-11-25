@@ -17,6 +17,7 @@ public:
     SelfAttention(int heads, int d_embed, bool proj_bias = true, bool out_bias = true);
 
     Tensor forward(const Tensor& input, bool mask = false);
+    void free_memory();
 };
 
 class CrossAttention {

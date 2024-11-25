@@ -4,10 +4,6 @@
 #include "attention.h"
 
 SelfAttention::SelfAttention() {
-    q_proj = Linear();
-    k_proj = Linear();
-    v_proj = Linear();
-    out_proj = Linear();
     heads = 0;
     d_embed = 0;
     d_head = 0;
@@ -45,6 +41,12 @@ Tensor SelfAttention::forward(const Tensor& input, bool mask) {
     return out_proj.forward(result);
 }
 
+void SelfAttention::free_memory() {
+    q_proj.free_memory();
+    k_proj.free_memory();
+    v_proj.free_memory();
+    out_proj.free_memory();
+}
 
 CrossAttention::CrossAttention() {
     q_proj = Linear();
