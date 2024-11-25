@@ -1,5 +1,5 @@
-#ifndef DIS_CU_H
-#define DIS_CU_H
+#ifndef KERNELS_H
+#define KERNELS_H
 
 #include <cuda_runtime.h>    
 
