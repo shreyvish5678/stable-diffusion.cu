@@ -17,10 +17,7 @@ public:
     void allocate_cpu();
     void allocate_gpu();
     void free_memory();
-    void init_zero();
-    void init_one();
-    void init_rand();
-
+    void init(float value = 0.0f, bool if_random = false, unsigned long long seed = 42);    
     float at(int i);
     float at(int i, int j);
     float at(int i, int j, int k);
@@ -28,15 +25,18 @@ public:
 
     void print();
 
-    Tensor operator+(const Tensor& other);
-    Tensor operator*(const Tensor& other);
+    Tensor operator+(Tensor& other);
+    Tensor operator+(float scalar);
+    Tensor operator-(Tensor& other);
+    Tensor operator*(Tensor& other);
     Tensor operator*(float scalar);
 
-    static Tensor matmul(const Tensor& a, const Tensor& b);
+    static Tensor matmul(Tensor& a, Tensor& b);
 
     Tensor reshape(int* new_dims, int new_ndims);
     Tensor transpose(int dim1, int dim2);
-    Tensor softmax();
+    static Tensor softmax(Tensor& input);
+    static Tensor invsqrt(Tensor& input);
 
     void save(const std::string& filename);
     void load(const std::string& filename);

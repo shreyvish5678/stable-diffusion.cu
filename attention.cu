@@ -19,14 +19,14 @@ SelfAttention::SelfAttention(int heads, int d_embed, bool proj_bias, bool out_bi
     this->d_head = d_embed / heads;
 }
 
-Tensor SelfAttention::forward(const Tensor& input, bool mask) {
+Tensor SelfAttention::forward(Tensor& input, bool mask) {
     int batch_size = input.dims[0];
     int seq_len = input.dims[1];
     int interim_dims[] = {batch_size, seq_len, heads, d_head};
     Tensor q = q_proj.forward(input).reshape(interim_dims, 4).transpose(1, 2);
-    Tensor k = k_proj.forward(input).reshape(interim_dims, 4).transpose(1, 2);
+    Tensor k = k_proj.forward(input).reshape(interim_dims, 4).transpose(1, 2).transpose(2, 3);
     Tensor v = v_proj.forward(input).reshape(interim_dims, 4).transpose(1, 2);
-    Tensor weight = Tensor::matmul(q, k.transpose(2, 3));
+    Tensor weight = Tensor::matmul(q, k);
     if (mask) { 
         dim3 block_size(16, 16);
         dim3 grid_size((seq_len + block_size.x - 1) / block_size.x, (seq_len + block_size.y - 1) / block_size.y, batch_size * heads);
@@ -36,7 +36,7 @@ Tensor SelfAttention::forward(const Tensor& input, bool mask) {
         cudaMemcpy(weight.data_cpu, weight.data_gpu, weight.size * sizeof(float), cudaMemcpyDeviceToHost);
     }
     weight = weight * (1.0 / sqrt(d_head));
-    weight = weight.softmax();
+    weight = Tensor::softmax(weight);
     Tensor result = Tensor::matmul(weight, v).transpose(1, 2).reshape(input.dims, 3);
     return out_proj.forward(result);
 }
@@ -69,16 +69,16 @@ CrossAttention::CrossAttention(int heads, int d_embed, int d_cross, bool proj_bi
     this->d_cross = d_cross;
 }
 
-Tensor CrossAttention::forward(const Tensor& input, const Tensor& context) {
+Tensor CrossAttention::forward(Tensor& input, Tensor& context) {
     int batch_size = input.dims[0];
     int seq_len = input.dims[1];
     int interim_dims[] = {batch_size, seq_len, heads, d_head};
     Tensor q = q_proj.forward(input).reshape(interim_dims, 4).transpose(1, 2);
-    Tensor k = k_proj.forward(context).reshape(interim_dims, 4).transpose(1, 2);
+    Tensor k = k_proj.forward(context).reshape(interim_dims, 4).transpose(1, 2).transpose(2, 3);
     Tensor v = v_proj.forward(context).reshape(interim_dims, 4).transpose(1, 2);
-    Tensor weight = Tensor::matmul(q, k.transpose(2, 3));
+    Tensor weight = Tensor::matmul(q, k);
     weight = weight * (1.0 / sqrt(d_head));
-    weight = weight.softmax();
+    weight = Tensor::softmax(weight);
     Tensor result = Tensor::matmul(weight, v).transpose(1, 2).reshape(input.dims, 3);
     return out_proj.forward(result);
 }
