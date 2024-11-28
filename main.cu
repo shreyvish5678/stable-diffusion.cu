@@ -5,7 +5,7 @@
 
 int main() {
     Tensor input = Tensor(new int[3]{16, 77, 768}, 3);
-    input.init(0, true, 42);
+    input.init_rand();
     printf("%f\n", input.at(8, 8, 8));
     SelfAttention attention = SelfAttention(12, 768, true, true);
     Tensor output = attention.forward(input, true);

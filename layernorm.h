@@ -12,7 +12,7 @@ public:
 
     LayerNorm();
 
-    LayerNorm(int d_model, float eps = 1e-6);
+    LayerNorm(int d_model, float eps = 1e-5);
 
     Tensor forward(Tensor& input);
 

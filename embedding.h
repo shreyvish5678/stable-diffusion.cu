@@ -12,7 +12,7 @@ public:
     Embedding();
     Embedding(int vocab_size, int d_embed);
 
-    Tensor forward(int* tokens, int batch_size, int seq_len);
+    Tensor forward(const int* tokens, int batch_size, int seq_len);
     void free_memory();
 };
 

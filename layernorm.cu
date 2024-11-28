@@ -12,8 +12,8 @@ LayerNorm::LayerNorm(int d_model, float eps) {
     this->eps = eps;
     gamma = Tensor(new int[1]{d_model}, 1);
     beta = Tensor(new int[1]{d_model}, 1);
-    gamma.init(0, true, 42);
-    beta.init(0, true, 42);
+    gamma.init_rand();
+    beta.init_rand();
 }
 
 Tensor LayerNorm::forward(Tensor& input) {

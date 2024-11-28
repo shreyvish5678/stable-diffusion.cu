@@ -12,7 +12,7 @@ public:
     Linear();
     Linear(int in_features, int out_features, bool if_bias = true);
 
-    Tensor forward(Tensor& input);
+    Tensor forward(const Tensor& input);
     void free_memory();
 };
 

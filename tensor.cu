@@ -47,10 +47,29 @@ void Tensor::free_memory() {
     cudaFree(data_gpu);
 }
 
-void Tensor::init(float value, bool if_random, unsigned long long seed) {
+void Tensor::init_zero() {
     int block_size = 256;
     int num_blocks = (size + block_size - 1) / block_size;
-    init_kernel<<<num_blocks, block_size>>>(data_gpu, size, value, if_random, seed);
+    init_zero_kernel<<<num_blocks, block_size>>>(data_gpu, size);
+    cudaDeviceSynchronize();
+    CHECK_ERROR();
+    cudaMemcpy(data_cpu, data_gpu, size * sizeof(float), cudaMemcpyDeviceToHost);
+}
+
+void Tensor::init_one() {
+    int block_size = 256;
+    int num_blocks = (size + block_size - 1) / block_size;
+    init_one_kernel<<<num_blocks, block_size>>>(data_gpu, size);
+    cudaDeviceSynchronize();
+    CHECK_ERROR();
+    cudaMemcpy(data_cpu, data_gpu, size * sizeof(float), cudaMemcpyDeviceToHost);
+}
+
+void Tensor::init_rand() {
+    int block_size = 256;
+    int num_blocks = (size + block_size - 1) / block_size;
+    unsigned long long seed = rand();
+    init_rand_kernel<<<num_blocks, block_size>>>(data_gpu, size, seed);
     cudaDeviceSynchronize();
     CHECK_ERROR();
     cudaMemcpy(data_cpu, data_gpu, size * sizeof(float), cudaMemcpyDeviceToHost);
@@ -93,59 +112,50 @@ void Tensor::print() {
 }
 
 // Overloaded addition operator
-Tensor Tensor::operator+(Tensor& other) {
-    Tensor result = Tensor(dims, ndims);
-    dim3 block_size;
-    dim3 num_blocks;
-    if (ndims == other.ndims) {
-        dim3 block_size(256);
-        dim3 num_blocks((size + block_size.x - 1) / block_size.x);
+Tensor Tensor::operator+(const Tensor& other) {
+    if (size == other.size) {
+        Tensor result = Tensor(dims, ndims);
+        int block_size = 256;
+        int num_blocks = (size + block_size - 1) / block_size;
+        add_kernel<<<num_blocks, block_size>>>(result.data_gpu, data_gpu, other.data_gpu, size);
+        cudaDeviceSynchronize();
+        CHECK_ERROR();
+        cudaMemcpy(result.data_cpu, result.data_gpu, size * sizeof(float), cudaMemcpyDeviceToHost);
+        return result;
     }
-    else if (ndims == 2 && other.ndims == 1) {
-        dim3 block_size(16, 16);
-        dim3 num_blocks((dims[1] + block_size.x - 1) / block_size.x, (dims[0] + block_size.y - 1) / block_size.y);
-    }
-    else if (ndims == 3 && other.ndims == 1) {
-        dim3 block_size(16, 16);
-        dim3 num_blocks((dims[2] + block_size.x - 1) / block_size.x, (dims[1] + block_size.y - 1) / block_size.y, dims[0]);
+    else if (dims[ndims - 1] == other.dims[other.ndims - 1]) {
+        Tensor result = Tensor(dims, ndims);
+        if (ndims == 2 && other.ndims == 1) {
+            dim3 block_size(16, 16);
+            dim3 num_blocks((dims[1] + block_size.x - 1) / block_size.x, (dims[0] + block_size.y - 1) / block_size.y);
+            add_bias_kernel<<<num_blocks, block_size>>>(result.data_gpu, data_gpu, other.data_gpu, dims, other.dims, dims[0], dims[1], other.dims[0]);
+            cudaDeviceSynchronize();
+            CHECK_ERROR();
+            cudaMemcpy(result.data_cpu, result.data_gpu, size * sizeof(float), cudaMemcpyDeviceToHost);
+            return result;
+        }
+        else if (ndims == 3 && other.ndims == 1) {
+            dim3 block_size(16, 16);
+            dim3 num_blocks((dims[2] + block_size.x - 1) / block_size.x, (dims[1] + block_size.y - 1) / block_size.y, dims[0]);
+            add_bias_3d_kernel<<<num_blocks, block_size>>>(result.data_gpu, data_gpu, other.data_gpu, dims, other.dims, dims[0], dims[1], dims[2], other.dims[0]);
+            cudaDeviceSynchronize();
+            CHECK_ERROR();
+            cudaMemcpy(result.data_cpu, result.data_gpu, size * sizeof(float), cudaMemcpyDeviceToHost);
+            return result;
+        }
+        else {
+            std::cerr << "Invalid dimensions for addition" << std::endl;
+            exit(1);
+        }
     }
     else {
         std::cerr << "Invalid dimensions for addition" << std::endl;
         exit(1);
     }
-    add_kernel<<<num_blocks, block_size>>>(result.data_gpu, data_gpu, other.data_gpu, result.dims, dims, other.dims, result.ndims, ndims, other.ndims);
-    cudaDeviceSynchronize();
-    CHECK_ERROR();
-    cudaMemcpy(result.data_cpu, result.data_gpu, size * sizeof(float), cudaMemcpyDeviceToHost);
-    return result;
-}
-
-Tensor Tensor::operator+(float scalar) {
-    Tensor result = Tensor(dims, ndims);
-    int block_size = 256;
-    int num_blocks = (size + block_size - 1) / block_size;
-    add_scalar_kernel<<<num_blocks, block_size>>>(result.data_gpu, data_gpu, scalar, size);
-    cudaDeviceSynchronize();
-    CHECK_ERROR();
-    cudaMemcpy(result.data_cpu, result.data_gpu, size * sizeof(float), cudaMemcpyDeviceToHost);
-    return result;
-}
-
-// Overloaded subtraction operator
-Tensor Tensor::operator-(Tensor& other) {
-    assert(size == other.size);
-    Tensor result = Tensor(dims, ndims);
-    int block_size = 256;
-    int num_blocks = (size + block_size - 1) / block_size;
-    subtract_kernel<<<num_blocks, block_size>>>(result.data_gpu, data_gpu, other.data_gpu, size);
-    cudaDeviceSynchronize();
-    CHECK_ERROR();
-    cudaMemcpy(result.data_cpu, result.data_gpu, size * sizeof(float), cudaMemcpyDeviceToHost);
-    return result;
 }
 
 // Overloaded multiplication operator
-Tensor Tensor::operator*(Tensor& other) {
+Tensor Tensor::operator*(const Tensor& other) {
     assert(size == other.size);
 
     Tensor result = Tensor(dims, ndims);
@@ -163,6 +173,7 @@ Tensor Tensor::operator*(float scalar) {
     Tensor result = Tensor(dims, ndims);
     int block_size = 256;
     int num_blocks = (size + block_size - 1) / block_size;
+    cudaMemcpy(data_gpu, data_cpu, size * sizeof(float), cudaMemcpyHostToDevice);
     multiply_scalar_kernel<<<num_blocks, block_size>>>(result.data_gpu, data_gpu, scalar, size);
     cudaDeviceSynchronize();
     CHECK_ERROR();
@@ -172,45 +183,65 @@ Tensor Tensor::operator*(float scalar) {
 }
 
 // Static method to perform matrix multiplication
-Tensor Tensor::matmul(Tensor& a, Tensor& b) {
-    Tensor result;
-    dim3 block_size;
-    dim3 num_blocks;
+Tensor Tensor::matmul(const Tensor& a, const Tensor& b) {
     if (a.ndims == 2 && b.ndims == 2) {
         assert(a.dims[1] == b.dims[0]);
+
         int result_dims[] = {a.dims[0], b.dims[1]};
-        result = Tensor(result_dims, 2);
-        block_size = dim3(16, 16);
-        num_blocks = dim3((result_dims[1] + block_size.x - 1) / block_size.x, (result_dims[0] + block_size.y - 1) / block_size.y);
+        Tensor result = Tensor(result_dims, 2);
+
+        dim3 block_size(16, 16);
+        dim3 num_blocks((result_dims[1] + block_size.x - 1) / block_size.x, (result_dims[0] + block_size.y - 1) / block_size.y);
+        matmul_kernel<<<num_blocks, block_size>>>(result.data_gpu, a.data_gpu, b.data_gpu, a.dims[0], b.dims[0], a.dims[1], b.dims[1]);
+        cudaDeviceSynchronize();
+        CHECK_ERROR();
+
+        cudaMemcpy(result.data_cpu, result.data_gpu, result.size * sizeof(float), cudaMemcpyDeviceToHost);
+        return result;
     }
     else if (a.ndims == 3 && b.ndims == 2) {
         assert (a.dims[2] == b.dims[0]);
+
         int result_dims[] = {a.dims[0], a.dims[1], b.dims[1]};
-        result = Tensor(result_dims, 3);
-        block_size = dim3(16, 16);
-        num_blocks = dim3((result_dims[2] + block_size.x - 1) / block_size.x, (result_dims[1] + block_size.y - 1) / block_size.y, result_dims[0]);
+        Tensor result = Tensor(result_dims, 3);
+
+        dim3 block_size(16, 16);
+        dim3 num_blocks((result_dims[2] + block_size.x - 1) / block_size.x, (result_dims[1] + block_size.y - 1) / block_size.y, result_dims[0]);
+
+        matmul_3d_kernel<<<num_blocks, block_size>>>(result.data_gpu, a.data_gpu, b.data_gpu, a.dims[0], a.dims[1], b.dims[0], a.dims[2], b.dims[1]);
+        cudaDeviceSynchronize();
+        CHECK_ERROR();
+
+        cudaMemcpy(result.data_cpu, result.data_gpu, result.size * sizeof(float), cudaMemcpyDeviceToHost);
+        return result;
     }
     else if (a.ndims == 4 && b.ndims == 4) {
         assert(a.dims[0] == b.dims[0]);
         assert (a.dims[1] == b.dims[1]);
         assert (a.dims[3] == b.dims[2]);
         int result_dims[] = {a.dims[0], a.dims[1], a.dims[2], b.dims[3]};
-        result = Tensor(result_dims, 4);
-        block_size = dim3(16, 16);
-        num_blocks = dim3((result_dims[3] + block_size.x - 1) / block_size.x, 
+        Tensor result = Tensor(result_dims, 4);
+        dim3 block_size(16, 16);
+        dim3 num_blocks((result_dims[3] + block_size.x - 1) / block_size.x, 
                         (result_dims[2] + block_size.y - 1) / block_size.y, 
                         result_dims[0] * result_dims[1]);
+
+        matmul_4d_kernel<<<num_blocks, block_size>>>(
+            result.data_gpu, a.data_gpu, b.data_gpu, 
+            a.dims[0], a.dims[1], a.dims[2], a.dims[3], b.dims[3]
+        );
+
+        cudaDeviceSynchronize();
+        CHECK_ERROR();
+
+        cudaMemcpy(result.data_cpu, result.data_gpu, result.size * sizeof(float), cudaMemcpyDeviceToHost);
+        return result;
     }
     else {
         std::cout << a.ndims << " " << b.ndims << std::endl;
         std::cerr << "Invalid dimensions for matrix multiplication" << std::endl;
         exit(1);
     }
-    matmul_kernel<<<num_blocks, block_size>>>(result.data_gpu, a.data_gpu, b.data_gpu, result.dims, a.dims, b.dims, result.ndims, a.ndims, b.ndims);
-    cudaDeviceSynchronize();
-    CHECK_ERROR();
-    cudaMemcpy(result.data_cpu, result.data_gpu, result.size * sizeof(float), cudaMemcpyDeviceToHost);
-    return result;
 }
 
 // Reshape the tensor
@@ -243,27 +274,16 @@ Tensor Tensor::transpose(int dim1, int dim2) {
 }
 
 // Softmax function 
-Tensor Tensor::softmax(Tensor& input) {
-    assert (input.ndims == 4);
-    Tensor result = Tensor(input.dims, input.ndims);
-    dim3 block_size(input.dims[0], input.dims[1], input.dims[2]);
-    dim3 threads(input.dims[3], 1, 1);
-    softmax_kernel<<<block_size, threads>>>(result.data_gpu, input.data_gpu, input.dims[0], input.dims[1], input.dims[2], input.dims[3]);
+Tensor Tensor::softmax() {
+    assert (ndims == 4);
+    Tensor result = Tensor(dims, ndims);
+    dim3 block_size(dims[0], dims[1], dims[2]);
+    dim3 threads(dims[3], 1, 1);
+    cudaMemcpy(data_gpu, data_cpu, size * sizeof(float), cudaMemcpyHostToDevice);
+    softmax_kernel<<<block_size, threads>>>(result.data_gpu, data_gpu, dims[0], dims[1], dims[2], dims[3]);
     cudaDeviceSynchronize();
     CHECK_ERROR();
-    cudaMemcpy(result.data_cpu, result.data_gpu, input.size * sizeof(float), cudaMemcpyDeviceToHost);
-    return result;
-}
-
-// Square root function
-Tensor Tensor::invsqrt(Tensor& input) {
-    Tensor result = Tensor(input.dims, input.ndims);
-    int block_size = 256;
-    int num_blocks = (input.size + block_size - 1) / block_size;
-    inv_sqrt_kernel<<<num_blocks, block_size>>>(result.data_gpu, input.data_gpu, input.size);
-    cudaDeviceSynchronize();
-    CHECK_ERROR();
-    cudaMemcpy(result.data_cpu, result.data_gpu, input.size * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(result.data_cpu, result.data_gpu, size * sizeof(float), cudaMemcpyDeviceToHost);
     return result;
 }
 
