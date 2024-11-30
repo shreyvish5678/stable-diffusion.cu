@@ -1,9 +1,8 @@
-#include "attention.h"
-#include "kernels.h"
-#include "tensor.h"
-#include "linear.h"
-#include "embedding.h"
-#include "layernorm.h"
+#include "src/layers/attention.h"
+#include "src/layers/tensor.h"
+#include "src/layers/linear.h"
+#include "src/layers/embedding.h"
+#include "src/layers/layernorm.h"
 
 int main() {
     int tokens[2][3] = {{1, 2, 3}, {4, 5, 6}};

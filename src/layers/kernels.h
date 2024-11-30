@@ -27,5 +27,6 @@ __global__ void embedding_lookup_kernel(float* output, float* weight, int* token
 __global__ void mean_kernel(float* output, float* input, int batch_size, int seq_len, int d_model);
 __global__ void variance_kernel(float* output, float* input, float* mean, int batch_size, int seq_len, int d_model);
 __global__ void sqrt_kernel(float* result, float* input, int size);
+__global__ void gelu_kernel(float* result, float* input, int size);
 
 #endif 

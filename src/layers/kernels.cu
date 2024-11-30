@@ -351,3 +351,12 @@ __global__ void sqrt_kernel(float* result, float* input, int size) {
         result[idx] = sqrtf(input[idx]);
     }
 }
+
+// CUDA kernel to apply the GELU activation function
+__global__ void gelu_kernel(float* result, float* input, int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) {
+        float x = input[idx];
+        result[idx] = x / (1.0f + expf(-1.702f * x));
+    }
+}
