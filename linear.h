@@ -12,8 +12,8 @@ public:
     Linear();
     Linear(int in_features, int out_features, bool if_bias = true);
 
-    Tensor forward(const Tensor& input);
+    Tensor forward(Tensor& input);
     void free_memory();
 };
 
-#endif // LINEAR_H
+#endif 

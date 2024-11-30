@@ -14,7 +14,7 @@ Embedding::Embedding(int vocab_size, int d_embed) {
     weight.init_rand();
 }
 
-Tensor Embedding::forward(const int* tokens, int batch_size, int seq_len) {
+Tensor Embedding::forward(int* tokens, int batch_size, int seq_len) {
     Tensor result = Tensor(new int[3]{batch_size, seq_len, d_embed}, 3);
     int block_size = 256;
     int grid_size = (result.size + block_size - 1) / block_size;

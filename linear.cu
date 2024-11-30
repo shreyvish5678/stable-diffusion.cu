@@ -17,7 +17,7 @@ Linear::Linear(int in_features, int out_features, bool if_bias) {
     }
 }
 
-Tensor Linear::forward(const Tensor& input) {
+Tensor Linear::forward(Tensor& input) {
     if (if_bias) {
         return Tensor::matmul(input, weights) + bias;
     }

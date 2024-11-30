@@ -40,25 +40,9 @@ class SelfAttention(nn.Module):
         output = self.out_proj(output)
         return output
 
-attention = SelfAttention(12, 768, True, True)
-input = torch.from_numpy(np.fromfile('input.bin', dtype=np.float32).reshape(16, 77, 768))
-print(input[8, 8, 8].item())
-attention.q_proj.weight.data = torch.from_numpy(np.fromfile('q_proj_weights.bin', dtype=np.float32).reshape(768, 768)).T
-print(attention.q_proj.weight.data[8, 8].item())
-attention.q_proj.bias.data = torch.from_numpy(np.fromfile('q_proj_bias.bin', dtype=np.float32))
-print(attention.q_proj.bias.data[8].item())
-attention.k_proj.weight.data = torch.from_numpy(np.fromfile('k_proj_weights.bin', dtype=np.float32).reshape(768, 768)).T
-print(attention.k_proj.weight.data[8, 8].item())
-attention.k_proj.bias.data = torch.from_numpy(np.fromfile('k_proj_bias.bin', dtype=np.float32))
-print(attention.k_proj.bias.data[8].item())
-attention.v_proj.weight.data = torch.from_numpy(np.fromfile('v_proj_weights.bin', dtype=np.float32).reshape(768, 768)).T
-print(attention.v_proj.weight.data[8, 8].item())
-attention.v_proj.bias.data = torch.from_numpy(np.fromfile('v_proj_bias.bin', dtype=np.float32))
-print(attention.v_proj.bias.data[8].item())
-attention.out_proj.weight.data = torch.from_numpy(np.fromfile('out_proj_weights.bin', dtype=np.float32).reshape(768, 768)).T
-print(attention.out_proj.weight.data[8, 8].item())
-attention.out_proj.bias.data = torch.from_numpy(np.fromfile('out_proj_bias.bin', dtype=np.float32))
-print(attention.out_proj.bias.data[8].item())
-output = attention(input)
-output = attention(input, True)
-print(output[8, 8, 8].item())
+embedding = nn.Embedding(10, 3)
+tokens = torch.tensor([[1, 2, 3], [4, 5, 6]])
+embedding.weight.data = torch.from_numpy(np.fromfile('weight.bin', dtype=np.float32).reshape(10, 3))
+print(embedding.weight.data[0][0].item())
+x = embedding(tokens)
+print(x[0][0][0].item())

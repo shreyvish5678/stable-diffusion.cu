@@ -41,51 +41,148 @@ __global__ void init_rand_kernel(float* data, int size, unsigned long long seed)
     }
 }
 
-
-// CUDA kernel to add two arrays
-__global__ void add_kernel(float* result, float* a, float* b, int size) {
+// CUDA kernel to perform element-wise operations on two arrays
+__global__ void ops_kernel(float* result, float* a, float* b, int size, int op) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
-        result[idx] = a[idx] + b[idx];
+        switch (op) {
+            case 0:
+                result[idx] = a[idx] + b[idx];
+                break;
+            case 1:
+                result[idx] = a[idx] - b[idx];
+                break;
+            case 2:
+                result[idx] = a[idx] * b[idx];
+                break;
+            case 3:
+                result[idx] = a[idx] / b[idx];
+                break;
+        }
     }
 }
 
-// CUDA kernel to add a bias vector to a matrix
-__global__ void add_bias_kernel(float* result, float* a, float* b, int* a_dims, int* b_dims, int a_rows, int a_cols, int b_cols) {
+// CUDA kernel to perform element-wise operations on an array and a scalar
+__global__ void ops_scalar_kernel(float* result, float* a, float scalar, int size, int op) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) {
+        switch (op) {
+            case 0:
+                result[idx] = a[idx] + scalar;
+                break;
+            case 1:
+                result[idx] = a[idx] - scalar;
+                break;
+            case 2:
+                result[idx] = a[idx] * scalar;
+                break;
+            case 3:
+                result[idx] = a[idx] / scalar;
+                break;
+        }
+    }
+}
+
+// CUDA kernel to perform element-wise operations on 2d and a 1d tensor
+__global__ void ops_bias_kernel(float* result, float* a, float* b, int* a_dims, int* b_dims, int a_rows, int a_cols, int b_cols, int op) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (row < a_rows && col < b_cols) {
-        result[row * b_cols + col] = a[row * a_cols + col] + b[col];
+        switch (op) {
+            case 0:
+                result[row * b_cols + col] = a[row * a_cols + col] + b[col];
+                break;
+            case 1:
+                result[row * b_cols + col] = a[row * a_cols + col] - b[col];
+                break;
+            case 2:
+                result[row * b_cols + col] = a[row * a_cols + col] * b[col];
+                break;
+            case 3:
+                result[row * b_cols + col] = a[row * a_cols + col] / b[col];
+                break;
+        }
     }
 }
 
-// CUDA kernel to add a bias vector to a 3D tensor
-__global__ void add_bias_3d_kernel(float* result, float* a, float* b, int* a_dims, int* b_dims, int a_batch, int a_rows, int a_cols, int b_cols) {
+// CUDA kernel to perform element-wise operations on 3d and a 1d tensor
+__global__ void ops_bias_3d_kernel(float* result, float* a, float* b, int* a_dims, int* b_dims, int a_batch, int a_rows, int a_cols, int b_cols, int op) {
     int batch = blockIdx.z;
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (row < a_rows && col < b_cols) {
-        result[batch * a_rows * b_cols + row * b_cols + col] = a[batch * a_rows * a_cols + row * a_cols + col] + b[col];
+        switch (op) {
+            case 0:
+                result[batch * a_rows * b_cols + row * b_cols + col] = a[batch * a_rows * a_cols + row * a_cols + col] + b[col];
+                break;
+            case 1:
+                result[batch * a_rows * b_cols + row * b_cols + col] = a[batch * a_rows * a_cols + row * a_cols + col] - b[col];
+                break;
+            case 2:
+                result[batch * a_rows * b_cols + row * b_cols + col] = a[batch * a_rows * a_cols + row * a_cols + col] * b[col];
+                break;
+            case 3:
+                result[batch * a_rows * b_cols + row * b_cols + col] = a[batch * a_rows * a_cols + row * a_cols + col] / b[col];
+                break;
+        }
     }
 }
 
+// CUDA kernel to perform element-wise operations on 3d and a 2d tensor
+__global__ void ops_channel_kernel(float* result, float* a, float* b, int batch_size, int seq_len, int d_model, int op) {
+    int row = blockIdx.x * blockDim.x + threadIdx.x;
+    int col = blockIdx.y * blockDim.y + threadIdx.y; 
+    int channel = blockIdx.z * blockDim.z + threadIdx.z; 
 
-// CUDA kernel to multiply two arrays element-wise
-__global__ void multiply_kernel(float* result, float* a, float* b, int size) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < size) {
-        result[idx] = a[idx] * b[idx];
+    if (row < batch_size && col < seq_len && channel < d_model) {
+        switch (op) {
+            case 0:
+                result[channel * batch_size * seq_len + row * seq_len + col] = 
+                a[channel * batch_size * seq_len + row * seq_len + col] + b[row * seq_len + col];
+                break;
+            case 1:
+                result[channel * batch_size * seq_len + row * seq_len + col] = 
+                a[channel * batch_size * seq_len + row * seq_len + col] - b[row * seq_len + col];
+                break;
+            case 2:
+                result[channel * batch_size * seq_len + row * seq_len + col] = 
+                a[channel * batch_size * seq_len + row * seq_len + col] * b[row * seq_len + col];
+                break;
+            case 3:
+                result[channel * batch_size * seq_len + row * seq_len + col] = 
+                a[channel * batch_size * seq_len + row * seq_len + col] / b[row * seq_len + col];
+                break;
+        }
     }
 }
 
+// CUDA kernel to perform element-wise operations on 3d and a 2d tensor where the 3d tensor is a batch of 2d tensor
+__global__ void ops_batch_kernel(float* result, float* a, float* b, int batch_size, int seq_len, int d_model, int op) {
+    int row = blockIdx.x * blockDim.x + threadIdx.x;  
+    int col = blockIdx.y * blockDim.y + threadIdx.y; 
+    int channel = blockIdx.z * blockDim.z + threadIdx.z; 
 
-// CUDA kernel to multiply an array by a scalar
-__global__ void multiply_scalar_kernel(float* result, float* a, float scalar, int size) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < size) {
-        result[idx] = a[idx] * scalar;
+    if (row < batch_size && col < seq_len && channel < d_model) {
+        switch (op) {
+            case 0: 
+                result[row * seq_len * d_model + col * d_model + channel] = 
+                a[row * seq_len * d_model + col * d_model + channel] + b[col * d_model + channel];
+                break;
+            case 1: 
+                result[row * seq_len * d_model + col * d_model + channel] = 
+                a[row * seq_len * d_model + col * d_model + channel] - b[col * d_model + channel];
+                break;
+            case 2: 
+                result[row * seq_len * d_model + col * d_model + channel] = 
+                a[row * seq_len * d_model + col * d_model + channel] * b[col * d_model + channel];
+                break;
+            case 3: 
+                result[row * seq_len * d_model + col * d_model + channel] = 
+                a[row * seq_len * d_model + col * d_model + channel] / b[col * d_model + channel];
+                break;
+        }
     }
 }
 
@@ -207,7 +304,7 @@ __global__ void mask_kernel(float* mask, int batch_size, int seq_len, int heads)
 }
 
 // CUDA kernel for embedding lookup 
-__global__ void embedding_lookup_kernel(float* result, float* weight, const int* tokens, int batch_size, int seq_len, int d_embed, int vocab_size, int size) {
+__global__ void embedding_lookup_kernel(float* result, float* weight, int* tokens, int batch_size, int seq_len, int d_embed, int vocab_size, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         int batch = idx / (seq_len * d_embed);
@@ -217,5 +314,40 @@ __global__ void embedding_lookup_kernel(float* result, float* weight, const int*
         if (token_idx >= 0 && token_idx < vocab_size) {
             result[idx] = weight[token_idx * d_embed + dim];
         }   
+    }
+}
+
+// CUDA kernel to compute the mean of a 3D tensor along the last dimension
+__global__ void mean_kernel(float* result, float* input, int batch_size, int seq_len, int d_model) {
+    int row = blockIdx.x * blockDim.x + threadIdx.x;
+    int col = blockIdx.y * blockDim.y + threadIdx.y;
+    if (row < batch_size && col < seq_len) {
+        float sum = 0.0f;
+        for (int i = 0; i < d_model; i++) {
+            sum += input[row * seq_len * d_model + col * d_model + i];
+        }
+        result[row * seq_len + col] = sum / d_model;
+    }
+}
+
+// CUDA kernel to compute the variance of a 3D tensor along the last dimension
+__global__ void variance_kernel(float* result, float* input, float* mean, int batch_size, int seq_len, int d_model) {
+    int row = blockDim.y * blockIdx.y + threadIdx.y;
+    int col = blockDim.x * blockIdx.x + threadIdx.x;
+    if (row < batch_size && col < seq_len) {
+        float sum = 0.0f;
+        for (int i = 0; i < d_model; i++) {
+            float diff = input[row * seq_len * d_model + col * d_model + i] - mean[row * seq_len + col];
+            sum += diff * diff;
+        }
+        result[row * seq_len + col] = sum / d_model;
+    }
+}
+
+// CUDA kernel to get square root of a tensor
+__global__ void sqrt_kernel(float* result, float* input, int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) {
+        result[idx] = sqrtf(input[idx]);
     }
 }

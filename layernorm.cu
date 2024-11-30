@@ -12,17 +12,19 @@ LayerNorm::LayerNorm(int d_model, float eps) {
     this->eps = eps;
     gamma = Tensor(new int[1]{d_model}, 1);
     beta = Tensor(new int[1]{d_model}, 1);
-    gamma.init_rand();
+    gamma.init_rand();    
     beta.init_rand();
 }
 
 Tensor LayerNorm::forward(Tensor& input) {
-    /*
     Tensor mean = Tensor::mean(input);
-    Tensor vareps = Tensor::var(input) + eps;
-    Tensor shifted = (input - mean) * Tensor::invsqrt(vareps);
-    Tensor out = shifted * gamma + beta;
+    Tensor vareps = Tensor::variance(input, mean) + eps;
+    Tensor rstd = Tensor::sqrt(vareps);
+    Tensor out = ((input - mean) / rstd) * gamma + beta;
     return out;
-    */
-   return Tensor();
+}
+
+void LayerNorm::free_memory() {
+    gamma.free_memory();
+    beta.free_memory();
 }

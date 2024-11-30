@@ -28,11 +28,22 @@ public:
 
     void print();
 
-    Tensor operator+(const Tensor& other);
-    Tensor operator*(const Tensor& other);
-    Tensor operator*(float scalar);
+    Tensor operation(Tensor& other, int operation);
+    Tensor operation(float scalar, int operation);
 
-    static Tensor matmul(const Tensor& a, const Tensor& b);
+    Tensor operator+(Tensor& other);
+    Tensor operator+(float scalar);
+    Tensor operator-(Tensor& other);
+    Tensor operator-(float scalar);
+    Tensor operator*(Tensor& other);
+    Tensor operator*(float scalar);
+    Tensor operator/(Tensor& other);
+    Tensor operator/(float scalar);
+
+    static Tensor matmul(Tensor& a, Tensor& b);
+    static Tensor mean(Tensor& input);
+    static Tensor variance(Tensor& input, Tensor& mean);
+    static Tensor sqrt(Tensor& input);
 
     Tensor reshape(int* new_dims, int new_ndims);
     Tensor transpose(int dim1, int dim2);
