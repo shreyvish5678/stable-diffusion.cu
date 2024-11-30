@@ -1,14 +1,24 @@
-#include "src/layers/attention.h"
-#include "src/layers/tensor.h"
-#include "src/layers/linear.h"
-#include "src/layers/embedding.h"
-#include "src/layers/layernorm.h"
+#include <iostream>
+#include "src/clip.h"
 
 int main() {
-    int tokens[2][3] = {{1, 2, 3}, {4, 5, 6}};
-    Embedding embedding = Embedding(10, 3);
-    Tensor output = embedding.forward(&tokens[0][0], 2, 3);
-    printf("%f\n", embedding.weight.data_cpu[0]);
-    printf("%f\n", output.data_cpu[0]);
-    embedding.weight.save("weight.bin");
+    int tokens[2][77];
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 77; j++) {
+            tokens[i][j] = rand() % 100;   
+        }
+    }
+    CLIP clip = CLIP();
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
+    Tensor output = clip.forward(&tokens[0][0], 2);
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    std::cout << "Time: " << milliseconds << "ms" << std::endl;
+    std::cout << "Output: " << output.data_cpu[0] << std::endl;
+    return 0;
 }

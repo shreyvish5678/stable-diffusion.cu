@@ -5,7 +5,7 @@ I made this project to become more familiar with CUDA, and have already and am c
 # Run
 
 Clone this repository and inside the repo run
-`!nvcc -o main *.cu && ./main && rm main`
+`!nvcc -o main $(find . -name "*.cu") && ./main && rm main`
 It should compile run and clean everything with one simple command!
 
 # Checklist
