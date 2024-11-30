@@ -19,8 +19,8 @@ It should compile run and clean everything with one simple command!
 
 - [ ] **Create kernels to use in the Tensor library**
   - [x] Initialization Kernels
-  - [ ] Addition Kernels
-    - [ ] Generalized [Same Size]
+  - [x] Addition Kernels
+    - [x] Generalized [Same Size]
     - [x] Different Sizes (Do as needed)
   - [x] Multiplication Kernels
   - [x] Matmul Kernels
@@ -31,9 +31,9 @@ It should compile run and clean everything with one simple command!
   - [x] Mask kernel for attention
   - [x] Embedding Lookup kernel
   - [ ] Conv2d Kernel (4D input, 4D weight, kernel size, stride, padding), Upsampling
-  - [ ] Mean, Variance Kernels
-  - [ ] LayerNorm, Group Norm
-  - [ ] Activations: Silu, Gelu
+  - [x] Mean, Variance Kernels
+  - [x] LayerNorm, Group Norm
+  - [x] Activations: Silu, Gelu
 
 - [x] **Attention Class**
   - [x] Self Attention
@@ -41,7 +41,7 @@ It should compile run and clean everything with one simple command!
 
 - [x] Linear Class
 - [x] Embedding Class
-- [ ] CLIP Class
+- [x] CLIP Class
 - [ ] Decoder, Encoder Classes
 - [ ] Tokenizer
 - [ ] Diffusion Model Class

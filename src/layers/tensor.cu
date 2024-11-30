@@ -402,6 +402,18 @@ Tensor Tensor::gelu(Tensor& input) {
     return result;
 }
 
+// Sigmoid Linear Unit function
+Tensor Tensor::silu(Tensor& input) {
+    Tensor result = Tensor(input.dims, input.ndims);
+    int block_size = 256;
+    int num_blocks = (input.size + block_size - 1) / block_size;
+    silu_kernel<<<num_blocks, block_size>>>(result.data_gpu, input.data_gpu, input.size);
+    cudaDeviceSynchronize();
+    CHECK_ERROR();
+    cudaMemcpy(result.data_cpu, result.data_gpu, result.size * sizeof(float), cudaMemcpyDeviceToHost);
+    return result;
+}
+
 // Save the tensor to a file
 void Tensor::save(const std::string& filename) {
     std::ofstream file(filename, std::ios::binary);

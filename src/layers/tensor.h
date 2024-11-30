@@ -45,6 +45,7 @@ public:
     static Tensor variance(Tensor& input, Tensor& mean);
     static Tensor sqrt(Tensor& input);
     static Tensor gelu(Tensor& input);
+    static Tensor silu(Tensor& input);
 
     Tensor reshape(int* new_dims, int new_ndims);
     Tensor transpose(int dim1, int dim2);

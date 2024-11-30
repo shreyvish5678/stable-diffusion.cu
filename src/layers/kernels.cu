@@ -360,3 +360,12 @@ __global__ void gelu_kernel(float* result, float* input, int size) {
         result[idx] = x / (1.0f + expf(-1.702f * x));
     }
 }
+
+// CUDA kernel to apply the SiLU activation function
+__global__ void silu_kernel(float* result, float* input, int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) {
+        float x = input[idx];
+        result[idx] = x / (1.0f + expf(-x));
+    }
+}
